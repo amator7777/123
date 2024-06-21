@@ -1,0 +1,50 @@
+// ==UserScript==
+// @name         Test t1 Function
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Вызов функции t1 с userAgent и вывод результата
+// @author       Your Name
+// @match        https://hash.game/*
+// @grant        none
+// ==/UserScript==
+
+(async () => {
+    const wasmUrl = 'https://yourserver.com/0001d9fe.wasm';
+
+    // Функция для загрузки WASM модуля
+    async function loadWasm(url) {
+        try {
+            const response = await fetch(url);
+            const buffer = await response.arrayBuffer();
+            const wasmModule = await WebAssembly.instantiate(buffer);
+            return wasmModule.instance.exports;
+        } catch (error) {
+            console.error("Ошибка загрузки WASM:", error);
+            return null;
+        }
+    }
+
+    const wasmExports = await loadWasm(wasmUrl);
+
+    if (wasmExports) {
+        const { t1, t2 } = wasmExports;
+
+        // Получение userAgent
+        const userAgent = window.navigator.userAgent;
+        try {
+            // Вызов функции t1 с userAgent
+            const processedValue = t1(userAgent);
+            console.log("Processed Value:", processedValue); // Вывод результата
+
+            // Формирование и выполнение запроса
+            const url = `https://hash.game/api/account/login-pre/?p=${processedValue}`;
+            const response = await fetch(url, { method: 'POST' });
+            const result = await response.json();
+            console.log("Server Response:", result); // Вывод ответа сервера
+        } catch (error) {
+            console.error("Ошибка выполнения t1:", error);
+        }
+    } else {
+        console.error("Не удалось загрузить WASM модуль");
+    }
+})();
